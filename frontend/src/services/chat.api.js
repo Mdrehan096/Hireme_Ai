@@ -1,4 +1,5 @@
-const API_URL = "https://hireme-ai-backend-u4a0.onrender.com";
+const API_URL =
+  "https://hireme-ai-backend-u4a0.onrender.com/api/v1/chat/stream";
 
 export async function streamChat(question, onChunk) {
   const response = await fetch(API_URL, {
@@ -14,7 +15,7 @@ export async function streamChat(question, onChunk) {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to get response from server.");
+    throw new Error(`Server error: ${response.status}`);
   }
 
   if (!response.body) {
@@ -29,7 +30,6 @@ export async function streamChat(question, onChunk) {
       const { value, done } = await reader.read();
 
       if (done) {
-        // Flush any remaining decoded characters
         const remaining = decoder.decode();
 
         if (remaining) {
