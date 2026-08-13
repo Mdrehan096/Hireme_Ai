@@ -48,20 +48,21 @@ function Chat() {
         });
       });
     } catch (error) {
-      console.error("🔥 CHAT ERROR:", error);
+  console.error("🔥 CHAT ERROR:", error);
+  alert(error.message);
 
-      setMessages((prev) => {
-        const updated = [...prev];
-        const lastIndex = updated.length - 1;
+  setMessages((prev) => {
+    const updated = [...prev];
+    const lastIndex = updated.length - 1;
 
-        updated[lastIndex] = {
-          ...updated[lastIndex],
-          content: `Error: ${error.message}`,
-        };
+    updated[lastIndex] = {
+      ...updated[lastIndex],
+      content: `Error: ${error.message}`,
+    };
 
-        return updated;
-      });
-    } finally {
+    return updated;
+  });
+} finally {
       setLoading(false);
     }
   };
