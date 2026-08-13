@@ -2,20 +2,26 @@ const API_URL =
   "https://hireme-ai-backend-u4a0.onrender.com/api/v1/chat/stream";
 
 export async function streamChat(question, onChunk) {
-  console.log("Sending request to:", API_URL);
+  console.log(
+    "Sending request to:",
+    API_URL
+  );
 
   const response = await fetch(API_URL, {
     method: "POST",
+
     headers: {
       "Content-Type": "application/json",
     },
+
     body: JSON.stringify({
       question: question,
     }),
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
+    const errorText =
+      await response.text();
 
     console.error(
       "Backend error:",
@@ -29,18 +35,27 @@ export async function streamChat(question, onChunk) {
   }
 
   if (!response.body) {
-    throw new Error("Streaming is not supported.");
+    throw new Error(
+      "Streaming is not supported."
+    );
   }
 
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder("utf-8");
+  const reader =
+    response.body.getReader();
+
+  const decoder =
+    new TextDecoder("utf-8");
 
   try {
     while (true) {
-      const { value, done } = await reader.read();
+      const {
+        value,
+        done,
+      } = await reader.read();
 
       if (done) {
-        const remaining = decoder.decode();
+        const remaining =
+          decoder.decode();
 
         if (remaining) {
           onChunk(remaining);
@@ -49,12 +64,17 @@ export async function streamChat(question, onChunk) {
         break;
       }
 
-      const chunk = decoder.decode(value, {
-        stream: true,
-      });
+      const chunk =
+        decoder.decode(value, {
+          stream: true,
+        });
 
       if (chunk) {
-        console.log("FRONTEND CHUNK:", chunk);
+        console.log(
+          "RECEIVED CHUNK:",
+          chunk
+        );
+
         onChunk(chunk);
       }
     }

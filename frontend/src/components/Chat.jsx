@@ -1,92 +1,59 @@
-import { useState } from "react";
+const handleSend = async (question) => {
+  setLoading(true);
 
-import Message from "./Message";
-import ChatInput from "./ChatInput";
-
-import { streamChat } from "../services/chat.api";
-
-function Chat() {
-  const [messages, setMessages] = useState([
+  setMessages((prev) => [
+    ...prev,
+    {
+      role: "user",
+      content: question,
+    },
     {
       role: "assistant",
-      content:
-        "Hi! I'm Rehan's AI assistant. Ask me about his skills, projects, education, or experience.",
+      content: "",
     },
   ]);
 
-  const [loading, setLoading] = useState(false);
+  try {
+    await streamChat(question, (chunk) => {
+      console.log("RECEIVED CHUNK:", chunk);
 
-  const handleSend = async (question) => {
-    setLoading(true);
+      setMessages((prev) => {
+        const updated = [...prev];
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        role: "user",
-        content: question,
-      },
-      {
-        role: "assistant",
-        content: "",
-      },
-    ]);
+        const lastIndex =
+          updated.length - 1;
 
-    try {
-      await streamChat(question, (chunk) => {
-        console.log("RECEIVED CHUNK:", chunk);
+        updated[lastIndex] = {
+          ...updated[lastIndex],
+          content:
+            updated[lastIndex].content +
+            chunk,
+        };
 
-        setMessages((prev) => {
-          const updated = [...prev];
-          const lastIndex = updated.length - 1;
-
-          updated[lastIndex] = {
-            ...updated[lastIndex],
-            content: updated[lastIndex].content + chunk,
-          };
-
-          return updated;
-        });
+        return updated;
       });
-    } catch (error) {
-  console.error("🔥 CHAT ERROR:", error);
-  alert(error.message);
+    });
+  } catch (error) {
+    console.error(
+      "🔥 CHAT ERROR:",
+      error
+    );
 
-  setMessages((prev) => {
-    const updated = [...prev];
-    const lastIndex = updated.length - 1;
+    setMessages((prev) => {
+      const updated = [...prev];
 
-    updated[lastIndex] = {
-      ...updated[lastIndex],
-      content: `Error: ${error.message}`,
-    };
+      const lastIndex =
+        updated.length - 1;
 
-    return updated;
-  });
-} finally {
-      setLoading(false);
-    }
-  };
+      updated[lastIndex] = {
+        ...updated[lastIndex],
+        content:
+          `Error: ${error.message}`,
+      };
 
-  return (
-    <div className="chat-container">
-      <div className="chat-header">
-        <div>
-          <h1>HireMe AI</h1>
-          <p>AI assistant representing Rehan</p>
-        </div>
-
-        <span className="status">● Online</span>
-      </div>
-
-      <div className="messages">
-        {messages.map((message, index) => (
-          <Message key={index} message={message} />
-        ))}
-      </div>
-
-      <ChatInput onSend={handleSend} loading={loading} />
-    </div>
-  );
-}
-
-export default Chat;
+      return updated;
+    });
+  } finally {
+    setLoading(false);
+  }
+};
