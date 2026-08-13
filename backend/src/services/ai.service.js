@@ -49,9 +49,9 @@ ${resumeText}
 
     return JSON.parse(cleanedContent);
   } catch (error) {
-    console.error("Resume Parsing Error:", error.message);
+    console.error("Resume Parsing Error:", error);
 
-    throw new Error("Unable to parse resume.");
+    throw error;
   }
 }
 
@@ -102,9 +102,9 @@ ${question}
 
     return answer.trim();
   } catch (error) {
-    console.error("Chat Error:", error.message);
+    console.error("Chat Error:", error);
 
-    throw new Error("Unable to answer the question.");
+    throw error;
   }
 }
 
@@ -117,6 +117,8 @@ async function streamCandidate(question, resumeData, onChunk) {
     if (!resumeData) {
       throw new Error("Resume data is not available.");
     }
+
+    console.log("Sending question to Groq:", question);
 
     const stream = await groq.chat.completions.create({
       model: MODEL,
@@ -157,9 +159,8 @@ ${question}
       }
     }
   } catch (error) {
-    console.error("Streaming Chat Error:", error.message);
-
-    throw new Error("Unable to stream the answer.");
+    console.error("Streaming Chat Error:", error);
+    throw error;
   }
 }
 

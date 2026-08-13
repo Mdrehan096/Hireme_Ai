@@ -36,6 +36,7 @@ async function chat(req, res, next) {
       },
     });
   } catch (error) {
+    console.error("CHAT CONTROLLER ERROR:", error);
     next(error);
   }
 }
@@ -58,10 +59,10 @@ async function streamChat(req, res, next) {
       });
     }
 
-    // Tell the browser/client that we're sending
-    // chunks of text instead of one JSON response.
+    console.log("STREAM REQUEST:", question);
+
+    res.status(200);
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.setHeader("Transfer-Encoding", "chunked");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
@@ -75,6 +76,8 @@ async function streamChat(req, res, next) {
 
     res.end();
   } catch (error) {
+    console.error("STREAM CONTROLLER ERROR:", error);
+
     if (!res.headersSent) {
       next(error);
     } else {

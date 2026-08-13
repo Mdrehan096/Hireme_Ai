@@ -2,6 +2,8 @@ const API_URL =
   "https://hireme-ai-backend-u4a0.onrender.com/api/v1/chat/stream";
 
 export async function streamChat(question, onChunk) {
+  console.log("Sending request to:", API_URL);
+
   const response = await fetch(API_URL, {
     method: "POST",
 
@@ -15,7 +17,17 @@ export async function streamChat(question, onChunk) {
   });
 
   if (!response.ok) {
-    throw new Error(`Server error: ${response.status}`);
+    const errorText = await response.text();
+
+    console.error(
+      "Backend error:",
+      response.status,
+      errorText
+    );
+
+    throw new Error(
+      `Server error ${response.status}: ${errorText}`
+    );
   }
 
   if (!response.body) {
