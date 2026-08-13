@@ -6,13 +6,11 @@ export async function streamChat(question, onChunk) {
 
   const response = await fetch(API_URL, {
     method: "POST",
-
     headers: {
       "Content-Type": "application/json",
     },
-
     body: JSON.stringify({
-      question,
+      question: question,
     }),
   });
 
@@ -56,6 +54,7 @@ export async function streamChat(question, onChunk) {
       });
 
       if (chunk) {
+        console.log("FRONTEND CHUNK:", chunk);
         onChunk(chunk);
       }
     }
