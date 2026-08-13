@@ -19,7 +19,6 @@ function Chat() {
   const handleSend = async (question) => {
     setLoading(true);
 
-    // Add user message and empty assistant message
     setMessages((prev) => [
       ...prev,
       {
@@ -34,9 +33,10 @@ function Chat() {
 
     try {
       await streamChat(question, (chunk) => {
+        console.log("RECEIVED CHUNK:", chunk);
+
         setMessages((prev) => {
           const updated = [...prev];
-
           const lastIndex = updated.length - 1;
 
           updated[lastIndex] = {
@@ -48,16 +48,15 @@ function Chat() {
         });
       });
     } catch (error) {
-      console.error("Chat error:", error);
+      console.error("🔥 CHAT ERROR:", error);
 
       setMessages((prev) => {
         const updated = [...prev];
-
         const lastIndex = updated.length - 1;
 
         updated[lastIndex] = {
           ...updated[lastIndex],
-          content: "Sorry, I couldn't process your question.",
+          content: `Error: ${error.message}`,
         };
 
         return updated;
