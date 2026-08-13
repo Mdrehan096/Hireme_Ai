@@ -27,7 +27,10 @@ async function chat(req, res, next) {
       });
     }
 
-    const answer = await askCandidate(question, resumeData);
+    const answer = await askCandidate(
+      question,
+      resumeData
+    );
 
     res.status(200).json({
       success: true,
@@ -36,7 +39,11 @@ async function chat(req, res, next) {
       },
     });
   } catch (error) {
-    console.error("CHAT CONTROLLER ERROR:", error);
+    console.error(
+      "CHAT CONTROLLER ERROR:",
+      error
+    );
+
     next(error);
   }
 }
@@ -59,24 +66,50 @@ async function streamChat(req, res, next) {
       });
     }
 
-    console.log("STREAM REQUEST:", question);
+    console.log(
+      "STREAM REQUEST:",
+      question
+    );
 
     res.status(200);
-    res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
+
+    res.setHeader(
+      "Content-Type",
+      "text/plain; charset=utf-8"
+    );
+
+    res.setHeader(
+      "Cache-Control",
+      "no-cache, no-transform"
+    );
+
+    res.setHeader(
+      "X-Accel-Buffering",
+      "no"
+    );
+
+    // Send headers immediately
+    res.flushHeaders();
 
     await streamCandidate(
       question,
       resumeData,
       (chunk) => {
+        console.log(
+          "SENDING CHUNK:",
+          chunk
+        );
+
         res.write(chunk);
       }
     );
 
     res.end();
   } catch (error) {
-    console.error("STREAM CONTROLLER ERROR:", error);
+    console.error(
+      "STREAM CONTROLLER ERROR:",
+      error
+    );
 
     if (!res.headersSent) {
       next(error);
