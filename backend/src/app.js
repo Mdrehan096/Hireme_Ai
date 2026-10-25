@@ -20,6 +20,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   "https://hire-me-ai.vercel.app",
+  "https://hireme-9w5dt2j8k-mdrehan096s-projects.vercel.app",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
