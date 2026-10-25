@@ -3,57 +3,73 @@ const groq = require("../config/ai");
 const recruiterPrompt = require("../prompts/recruiter.prompt");
 const resumeParserPrompt = require("../prompts/resume-parser.prompt");
 
-const MODEL = "llama-3.1-8b-instant";
+const MODEL = "openai/gpt-oss-20b";
+
 
 async function parseResume(resumeText) {
-  try {
-    if (!resumeText || !resumeText.trim()) {
-      throw new Error("Resume text is empty.");
-    }
-
-    const response = await groq.chat.completions.create({
-      model: MODEL,
-      temperature: 0,
-      max_tokens: 1000,
-
-      messages: [
-        {
-          role: "system",
-          content: resumeParserPrompt,
-        },
-        {
-          role: "user",
-          content: `
-Here is the resume:
-
----------------- RESUME ----------------
-
-${resumeText}
-
--------------- END RESUME --------------
-`,
-        },
-      ],
-    });
-
-    const content = response.choices[0]?.message?.content;
-
-    if (!content) {
-      throw new Error("No response received from Groq.");
-    }
-
-    const cleanedContent = content
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
-
-    return JSON.parse(cleanedContent);
-  } catch (error) {
-    console.error("Resume Parsing Error:", error);
-
-    throw error;
+  if (!resumeText || !resumeText.trim()) {
+    throw new Error("Resume text is empty.");
   }
+
+  const response = await groq.chat.completions.create({
+    model: MODEL,
+    temperature: 0,
+    max_tokens: 2000,
+    response_format: {
+      type: "json_object"
+    },
+    messages: [
+      {
+        role: "system",
+        content: resumeParserPrompt +
+          "\nReturn one valid JSON object with exactly the specified keys. " +
+          "All string values must be valid JSON strings. Do not include markdown."
+      },
+      {
+        role: "user",
+        content: `Parse this resume into the required JSON structure:\n\n${resumeText}`
+      }
+    ]
+  });
+
+  const content = response.choices[0]?.message?.content;
+
+  if (!content) {
+    throw new Error("No response received from Groq.");
+  }
+
+  let parsed;
+
+  try {
+    parsed = JSON.parse(content);
+  } catch (error) {
+    console.error("Invalid JSON returned by Groq:", content);
+    throw new Error("Groq returned invalid resume JSON.");
+  }
+
+  const requiredKeys = [
+    "name",
+    "summary",
+    "education",
+    "skills",
+    "technicalSkills",
+    "projects",
+    "experience",
+    "certifications",
+    "strengths"
+  ];
+
+  for (const key of requiredKeys) {
+    if (!(key in parsed)) {
+      parsed[key] = ["education", "skills", "technicalSkills",
+        "projects", "experience", "certifications", "strengths"
+      ].includes(key) ? [] : "";
+    }
+  }
+
+  return parsed;
 }
+
 
 async function askCandidate(question, resumeData) {
   try {
