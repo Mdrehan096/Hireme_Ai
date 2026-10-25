@@ -10,9 +10,16 @@ const {
 
 const app = express();
 
+// const allowedOrigins = [
+//   "http://localhost:5173",
+//   "https://hireme-ai.vercel.app",
+//   process.env.FRONTEND_URL,
+// ].filter(Boolean);
+
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://hireme-ai.vercel.app",
+  "http://localhost:5174",
+  "https://hire-me-ai.vercel.app",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 

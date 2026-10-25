@@ -1,5 +1,5 @@
 
-const API_URL = "http://localhost:8000/api/v1/chat/stream";
+const API_URL = "https://hireme-ai-backend-a8c0.onrender.com/api/v1/chat/stream";
 
 export async function streamChat(question, onChunk) {
   const response = await fetch(API_URL, {
