@@ -1,3 +1,4 @@
+
 const groq = require("../config/ai");
 
 const recruiterPrompt = require("../prompts/recruiter.prompt");
@@ -5,7 +6,7 @@ const resumeParserPrompt = require("../prompts/resume-parser.prompt");
 
 const MODEL = "openai/gpt-oss-20b";
 
-
+// Parse resume into structured JSON
 async function parseResume(resumeText) {
   if (!resumeText || !resumeText.trim()) {
     throw new Error("Resume text is empty.");
@@ -14,63 +15,85 @@ async function parseResume(resumeText) {
   const response = await groq.chat.completions.create({
     model: MODEL,
     temperature: 0,
-    max_tokens: 2000,
+    max_completion_tokens: 6000,
+    reasoning_effort: "low",
+    include_reasoning: false,
     response_format: {
-      type: "json_object"
+      type: "json_object",
     },
     messages: [
       {
         role: "system",
-        content: resumeParserPrompt +
-          "\nReturn one valid JSON object with exactly the specified keys. " +
-          "All string values must be valid JSON strings. Do not include markdown."
+        content: `${resumeParserPrompt}
+
+Return one complete, valid JSON object.
+Include all required keys:
+"name", "summary", "education", "skills",
+"technicalSkills", "projects", "experience",
+"certifications", "strengths".
+
+Use double quotes for keys and string values.
+Use empty strings for missing text fields.
+Use empty arrays for missing list fields.
+Do not include Markdown or explanations.
+Ensure the entire JSON object is complete.`,
       },
       {
         role: "user",
-        content: `Parse this resume into the required JSON structure:\n\n${resumeText}`
-      }
-    ]
+        content: `Parse this resume into the required JSON structure:\n\n${resumeText}`,
+      },
+    ],
   });
 
   const content = response.choices[0]?.message?.content;
 
-  if (!content) {
-    throw new Error("No response received from Groq.");
+  console.log("Resume response length:", content?.length ?? 0);
+  console.log("Finish reason:", response.choices[0]?.finish_reason);
+
+  if (!content || !content.trim()) {
+    throw new Error(
+      "Groq returned an empty resume response. Check the finish reason above."
+    );
   }
 
   let parsed;
 
   try {
-    parsed = JSON.parse(content);
+    const cleaned = content
+      .trim()
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/, "");
+
+    parsed = JSON.parse(cleaned);
   } catch (error) {
     console.error("Invalid JSON returned by Groq:", content);
     throw new Error("Groq returned invalid resume JSON.");
   }
 
-  const requiredKeys = [
-    "name",
-    "summary",
+  const listKeys = [
     "education",
     "skills",
     "technicalSkills",
     "projects",
     "experience",
     "certifications",
-    "strengths"
+    "strengths",
   ];
+
+  const requiredKeys = ["name", "summary", ...listKeys];
 
   for (const key of requiredKeys) {
     if (!(key in parsed)) {
-      parsed[key] = ["education", "skills", "technicalSkills",
-        "projects", "experience", "certifications", "strengths"
-      ].includes(key) ? [] : "";
+      parsed[key] = listKeys.includes(key) ? [] : "";
     }
   }
+
+  console.log("Resume parsed successfully.");
 
   return parsed;
 }
 
-
+// Generate a normal, non-streaming answer
 async function askCandidate(question, resumeData) {
   try {
     if (!question || !question.trim()) {
@@ -84,8 +107,9 @@ async function askCandidate(question, resumeData) {
     const response = await groq.chat.completions.create({
       model: MODEL,
       temperature: 0.2,
-      max_tokens: 500,
-
+      max_completion_tokens: 1000,
+      reasoning_effort: "low",
+      include_reasoning: false,
       messages: [
         {
           role: "system",
@@ -112,18 +136,18 @@ ${question}
 
     const answer = response.choices[0]?.message?.content;
 
-    if (!answer) {
+    if (!answer || !answer.trim()) {
       throw new Error("No answer received from Groq.");
     }
 
     return answer.trim();
   } catch (error) {
     console.error("Chat Error:", error);
-
     throw error;
   }
 }
 
+// Generate a streaming answer
 async function streamCandidate(question, resumeData, onChunk) {
   try {
     if (!question || !question.trim()) {
@@ -139,9 +163,10 @@ async function streamCandidate(question, resumeData, onChunk) {
     const stream = await groq.chat.completions.create({
       model: MODEL,
       temperature: 0.2,
-      max_tokens: 500,
+      max_completion_tokens: 1000,
+      reasoning_effort: "low",
+      include_reasoning: false,
       stream: true,
-
       messages: [
         {
           role: "system",
@@ -170,7 +195,6 @@ ${question}
       const content = chunk.choices[0]?.delta?.content;
 
       if (content) {
-        console.log("GROQ CHUNK:", JSON.stringify(content));
         onChunk(content);
       }
     }
