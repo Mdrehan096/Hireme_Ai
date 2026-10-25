@@ -14,9 +14,15 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
+
+  // Main frontend URL
   "https://hireme-ai-eight.vercel.app",
+
+  // Other Vercel URLs
   "https://hire-me-ai.vercel.app",
+  "https://hireme-ai-git-main-mdrehan096s-projects.vercel.app",
   "https://hireme-9w5dt2j8k-mdrehan096s-projects.vercel.app",
+
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
